@@ -2,209 +2,362 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이미지를 두쪽뽑기 PDF로 (디테일 완성)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>이미지 & PDF 맞춤 인쇄기</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <style>
         :root {
-            --primary: #4F46E5;
-            --primary-hover: #4338CA;
-            --bg: #F9FAFB;
-            --border: #E5E7EB;
+            --bg: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --border: #1F2937;
             --text: #1F2937;
+            --primary: #6366F1;
+            --accent-green: #D1FAE5;
+            --accent-green-text: #065F46;
+            --accent-pink: #FEE2E2;
+            --accent-pink-text: #991B1B;
+            --shadow: 3px 3px 0px #1F2937;
+        }
+        * {
+            box-sizing: border-box;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 16px;
             text-align: center;
+            -webkit-tap-highlight-color: transparent;
         }
         h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
         }
         p.desc {
-            color: #6B7280;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        #drop-zone {
-            border: 2px dashed #9CA3AF;
-            border-radius: 12px;
-            padding: 40px 20px;
-            background-color: #ffffff;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            color: #4B5563;
+            font-size: 13px;
             margin-bottom: 20px;
         }
+        
+        /* 업로드 박스 스타일 (참조 이미지 스타일 반영) */
+        #drop-zone {
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 16px;
+            background-color: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
         #drop-zone.dragover {
-            border-color: var(--primary);
             background-color: #EEF2FF;
         }
         #drop-zone p {
             margin: 0;
-            font-size: 16px;
-            font-weight: 500;
-            color: #4B5563;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
         }
         #drop-zone span {
             display: block;
-            font-size: 12px;
-            color: #9CA3AF;
-            margin-top: 8px;
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 6px;
         }
         
         /* 컨트롤 영역 */
         #controls-container {
             display: none; 
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             margin-bottom: 20px;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow);
+            text-align: left;
         }
         .control-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .control-row label {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text);
-            min-width: 100px;
-            text-align: right;
+            font-size: 13px;
         }
-        
-        /* 모바일 휠(Picker) 최적화를 위한 Select 스타일 */
-        .select-wrapper {
+        .control-row .input-area {
             display: flex;
             align-items: center;
             gap: 6px;
         }
+        
         select {
             padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 16px; /* 16px 이상이어야 iOS 폼 입력 시 자동 확대(Zoom)가 방지됨 */
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            font-size: 14px;
+            font-weight: 600;
             outline: none;
             cursor: pointer;
-            width: 70px;
-            text-align: center;
             background-color: #fff;
+            box-shadow: 2px 2px 0px var(--border);
         }
 
-        /* 슬라이더와 라벨을 묶는 컨테이너 */
         .slider-container {
             display: flex;
             flex-direction: column;
-            width: 200px;
+            width: 160px;
         }
         input[type="range"] {
             width: 100%;
             cursor: pointer;
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
         }
         .range-labels {
-            font-size: 12px;
+            font-size: 10px;
             color: #6B7280;
             display: flex;
             justify-content: space-between;
             width: 100%;
+            font-weight: 600;
         }
 
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
+        /* 여백 실시간 미니 A4 프리뷰 박스 */
+        .preview-box-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .mini-page {
+            width: 110px;
+            height: 155px;
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        .mini-page.landscape {
+            width: 155px;
+            height: 110px;
+        }
+        .mini-margin-box {
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 2px dashed var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mini-grid-line-v {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%;
+            border-left: 1px dashed #9CA3AF;
+        }
+        .mini-grid-line-h {
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            border-top: 1px dashed #9CA3AF;
+        }
+        .mini-slot-label {
+            font-size: 9px;
+            color: var(--primary);
+            font-weight: 800;
+            background: rgba(255,255,255,0.9);
+            padding: 1px 3px;
+            border-radius: 3px;
+            border: 1px solid var(--primary);
+        }
+
+        /* 메인 다운로드 버튼 (초록색 포인트 스타일) */
+        #generate-btn {
+            background-color: var(--accent-green);
+            color: var(--accent-green-text);
+            border: 2px solid var(--border);
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            max-width: 300px;
-            transition: background-color 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
+            transition: transform 0.1s, box-shadow 0.1s;
             margin-top: 10px;
         }
-        button:hover {
-            background-color: var(--primary-hover);
+        #generate-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px var(--border);
         }
-        button:disabled {
-            background-color: #9CA3AF;
+        #generate-btn:disabled {
+            background-color: #E5E7EB;
+            color: #9CA3AF;
             cursor: not-allowed;
+            box-shadow: none;
             display: none;
         }
         
         #preview-container {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            justify-content: center;
             margin-bottom: 20px;
+        }
+        @media(min-width: 480px) {
+            #preview-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
         .preview-item-wrapper {
             position: relative;
-            width: 80px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .preview-img-container {
+            width: 100%;
             height: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             overflow: hidden;
+            background: #F9FAFB;
+            border-radius: 6px;
+            border: 1px solid #E5E7EB;
         }
         .preview-item {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            transition: transform 0.2s;
+            transition: transform 0.2s ease;
         }
-        .preview-item.landscape {
-            transform: rotate(90deg);
+        .rotate-btn {
+            background-color: #F3F4F6;
+            color: var(--text);
+            border: 2px solid var(--border);
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            box-shadow: 1px 1px 0px var(--border);
+            transition: background-color 0.1s;
+        }
+        .rotate-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            z-index: 999;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-    <h1>이미지를 두쪽뽑기 PDF로 🎨</h1>
-    <p class="desc">도안 크기를 꽉 차게 조절하고, 같은 도안끼리 모아서 출력할 수 있습니다.</p>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">파일을 처리 중입니다...</div>
+    </div>
 
-    <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+    <h1>이미지 & PDF 맞춤 인쇄기 🎨</h1>
+    <p class="desc">가로/세로 어떤 파일이든 A4 용지에 딱 맞춰 변환합니다.</p>
+
+    <input type="file" id="file-input" multiple accept="image/*,application/pdf" style="display: none;">
 
     <div id="drop-zone">
-        <p>이곳을 클릭하거나 이미지를 드래그 앤 드롭 하세요.</p>
-        <span>(여러 장 선택 가능, 스마트폰에서는 사진첩이 열립니다)</span>
+        <p>📁 이곳을 터치하여 파일 선택</p>
+        <span>(JPG, PNG, PDF 등 모든 이미지 및 문서 지원)</span>
     </div>
 
     <div id="preview-container"></div>
 
     <div id="controls-container">
         <div class="control-row">
-            <label for="copies-select">인쇄 부수 :</label>
-            <div class="select-wrapper">
-                <select id="copies-select">
-                    </select>
-                <span style="font-weight: 600; color: var(--text);">부</span>
+            <label for="layout-select">한장에 인쇄할 그림</label>
+            <div class="input-area">
+                <select id="layout-select">
+                    <option value="1">1장 (세로 단독)</option>
+                    <option value="2" selected>2장 (가로 반반)</option>
+                    <option value="4">4장 (2x2 격자)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <label for="copies-select">인쇄 부수</label>
+            <div class="input-area">
+                <select id="copies-select"></select>
+                <span style="font-weight: 700; font-size: 13px;">부</span>
             </div>
         </div>
         
-        <div class="control-row">
-            <label for="margin-slider">여백 크기 :</label>
-            <div class="slider-container">
-                <input type="range" id="margin-slider" min="0" max="150" value="0">
-                <div class="range-labels">
-                    <span>여백없음</span>
-                    <span>넓게</span>
+        <div class="control-row" style="align-items: flex-start; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <label for="margin-slider">여백 크기 조절</label>
+                <div class="slider-container">
+                    <input type="range" id="margin-slider" min="0" max="150" value="30">
+                    <div class="range-labels">
+                        <span>없음</span>
+                        <span>넓게</span>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-box-container">
+                <div id="mini-page" class="mini-page landscape">
+                    <div id="mini-margin-box" class="mini-margin-box">
+                        <div id="mini-grid-v" class="mini-grid-line-v"></div>
+                        <div id="mini-grid-h" class="mini-grid-line-h" style="display:none;"></div>
+                        <span class="mini-slot-label">여백 예시</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -213,16 +366,24 @@
     <button id="generate-btn" disabled>PDF로 다운로드</button>
 
     <script>
-        // DOM 요소 초기화
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const previewContainer = document.getElementById('preview-container');
         const controlsContainer = document.getElementById('controls-container');
         const generateBtn = document.getElementById('generate-btn');
         const copiesSelect = document.getElementById('copies-select');
-        let selectedFiles = [];
+        const layoutSelect = document.getElementById('layout-select');
+        const marginSlider = document.getElementById('margin-slider');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        
+        const miniPage = document.getElementById('mini-page');
+        const miniMarginBox = document.getElementById('mini-margin-box');
+        const miniGridV = document.getElementById('mini-grid-v');
+        const miniGridH = document.getElementById('mini-grid-h');
 
-        // 드롭다운 1~20 옵션 동적 생성 (코드 깔끔하게)
+        let uploadedItems = [];
+
         for (let i = 1; i <= 20; i++) {
             let option = document.createElement('option');
             option.value = i;
@@ -230,70 +391,152 @@
             copiesSelect.appendChild(option);
         }
 
-        // UI 이벤트
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        function handleFiles(files) {
-            for (let i = 0; i < files.length; i++) {
-                if (files[i].type.startsWith('image/')) {
-                    selectedFiles.push(files[i]);
-                    
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'preview-item-wrapper';
+        layoutSelect.addEventListener('change', updateMiniPreview);
+        marginSlider.addEventListener('input', updateMiniPreview);
 
-                        const img = new Image();
-                        img.src = e.target.result;
-                        img.className = 'preview-item';
-                        
-                        img.onload = function() {
-                            if (this.naturalWidth > this.naturalHeight) {
-                                img.classList.add('landscape');
-                            }
-                        };
-                        
-                        wrapper.appendChild(img);
-                        previewContainer.appendChild(wrapper);
-                    };
-                    reader.readAsDataURL(files[i]);
-                }
-            }
-            if (selectedFiles.length > 0) {
-                controlsContainer.style.display = 'flex';
-                generateBtn.style.display = 'inline-block';
-                generateBtn.disabled = false;
+        function updateMiniPreview() {
+            const layout = parseInt(layoutSelect.value, 10);
+            const val = parseInt(marginSlider.value, 10);
+            
+            const insetPx = (val / 150) * 18; 
+            miniMarginBox.style.top = insetPx + 'px';
+            miniMarginBox.style.bottom = insetPx + 'px';
+            miniMarginBox.style.left = insetPx + 'px';
+            miniMarginBox.style.right = insetPx + 'px';
+
+            if (layout === 1) {
+                miniPage.className = 'mini-page portrait';
+                miniGridV.style.display = 'none';
+                miniGridH.style.display = 'none';
+            } else if (layout === 2) {
+                miniPage.className = 'mini-page landscape';
+                miniGridV.style.display = 'block';
+                miniGridH.style.display = 'none';
+            } else if (layout === 4) {
+                miniPage.className = 'mini-page portrait';
+                miniGridV.style.display = 'block';
+                miniGridH.style.display = 'block';
             }
         }
 
-        // 이미지 로드 유틸리티
-        function loadImage(file) {
+        updateMiniPreview();
+
+        async function handleFiles(files) {
+            loadingOverlay.style.display = 'flex';
+            loadingText.innerText = '파일을 읽는 중입니다...';
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                        await processPdfFile(file);
+                    } else {
+                        await processImageFile(file);
+                    }
+                }
+
+                if (uploadedItems.length > 0) {
+                    controlsContainer.style.display = 'flex';
+                    generateBtn.style.display = 'block';
+                    generateBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('파일 처리 중 오류가 발생했습니다: ' + err.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        function processImageFile(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.src = e.target.result;
+                    addItemToPreview(e.target.result);
+                    resolve();
                 };
                 reader.readAsDataURL(file);
             });
         }
 
-        // 캔버스 슬롯 그리기
-        function drawImageIntoSlot(ctx, img, cx, cy, slotW, slotH) {
+        async function processPdfFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const pdfDoc = await loadingTask.promise;
+
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                addItemToPreview(canvas.toDataURL('image/jpeg', 0.9));
+            }
+        }
+
+        function addItemToPreview(dataUrl) {
+            const itemObj = { dataUrl: dataUrl, rotation: 0 };
+            uploadedItems.push(itemObj);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'preview-item-wrapper';
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'preview-img-container';
+
+            const img = new Image();
+            img.src = dataUrl;
+            img.className = 'preview-item';
+            
+            imgContainer.appendChild(img);
+
+            const rotateBtn = document.createElement('button');
+            rotateBtn.className = 'rotate-btn';
+            rotateBtn.innerText = '↺ 90° 회전';
+            rotateBtn.onclick = () => {
+                itemObj.rotation = (itemObj.rotation + 90) % 360;
+                img.style.transform = `rotate(${itemObj.rotation}deg)`;
+            };
+
+            wrapper.appendChild(imgContainer);
+            wrapper.appendChild(rotateBtn);
+            previewContainer.appendChild(wrapper);
+        }
+
+        function loadImageElement(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.src = dataUrl;
+            });
+        }
+
+        async function drawImageIntoSlotWithRotation(ctx, itemObj, cx, cy, slotW, slotH) {
+            const img = await loadImageElement(itemObj.dataUrl);
+            
             ctx.save();
             ctx.translate(cx, cy);
+            ctx.rotate((itemObj.rotation * Math.PI) / 180);
 
             let scale;
-            if (img.width > img.height) {
-                ctx.rotate(Math.PI / 2);
+            const rot = itemObj.rotation % 180;
+            if (rot !== 0) {
                 scale = Math.min(slotH / img.width, slotW / img.height);
             } else {
-                scale = Math.min(slotW / img.width, slotH / img.height);
+                if (img.width > img.height) {
+                    scale = Math.min(slotH / img.width, slotW / img.height);
+                } else {
+                    scale = Math.min(slotW / img.width, slotH / img.height);
+                }
             }
 
             const drawW = img.width * scale;
@@ -303,74 +546,147 @@
             ctx.restore();
         }
 
-        // PDF 생성 로직
         generateBtn.addEventListener('click', async () => {
             generateBtn.disabled = true;
-            generateBtn.innerText = 'PDF 생성 중... (잠시만 기다려주세요)';
+            loadingOverlay.style.display = 'flex';
+            loadingText.innerText = 'PDF 생성 중...';
             await new Promise(resolve => setTimeout(resolve, 50));
 
             const copies = parseInt(copiesSelect.value, 10);
-            
+            const layout = parseInt(layoutSelect.value, 10);
+            const MARGIN = parseInt(marginSlider.value, 10);
+
             let printQueue = [];
-            for (let i = 0; i < selectedFiles.length; i++) {
+            for (let i = 0; i < uploadedItems.length; i++) {
                 for (let c = 0; c < copies; c++) {
-                    printQueue.push(selectedFiles[i]);
+                    printQueue.push(uploadedItems[i]);
                 }
             }
-
-            if (printQueue.length % 2 !== 0) {
-                printQueue.push(printQueue[printQueue.length - 1]);
-            }
-
-            const MARGIN = parseInt(document.getElementById('margin-slider').value, 10);
 
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-            
-            const A4_W = 2970;
-            const A4_H = 2100;
-            const HALF_W = A4_W / 2; 
-            
-            const SLOT_W = HALF_W - (MARGIN * 2); 
-            const SLOT_H = A4_H - (MARGIN * 2);   
-            
-            const LEFT_CX = MARGIN + (SLOT_W / 2); 
-            const RIGHT_CX = HALF_W + MARGIN + (SLOT_W / 2); 
-            const CY = A4_H / 2; 
-
             let canvas = document.createElement('canvas');
-            canvas.width = A4_W;
-            canvas.height = A4_H;
             let ctx = canvas.getContext('2d');
 
-            for (let i = 0; i < printQueue.length; i += 2) {
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, A4_W, A4_H);
+            if (layout === 1) {
+                const A4_W = 2100;
+                const A4_H = 2970;
+                canvas.width = A4_W;
+                canvas.height = A4_H;
 
-                const imgLeft = await loadImage(printQueue[i]);
-                drawImageIntoSlot(ctx, imgLeft, LEFT_CX, CY, SLOT_W, SLOT_H);
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const SLOT_W = A4_W - (MARGIN * 2 * 10);
+                const SLOT_H = A4_H - (MARGIN * 2 * 10);
+                const CX = A4_W / 2;
+                const CY = A4_H / 2;
 
-                if (i + 1 < printQueue.length) {
-                    const imgRight = await loadImage(printQueue[i + 1]);
-                    drawImageIntoSlot(ctx, imgRight, RIGHT_CX, CY, SLOT_W, SLOT_H);
+                for (let i = 0; i < printQueue.length; i++) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, A4_W, A4_H);
+
+                    await drawImageIntoSlotWithRotation(ctx, printQueue[i], CX, CY, SLOT_W, SLOT_H);
+
+                    const canvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(canvasDataUrl, 'JPEG', 0, 0, 210, 297);
+                }
+                pdf.save(`맞춤인쇄_1장씩.pdf`);
+
+            } else if (layout === 2) {
+                if (printQueue.length % 2 !== 0) {
+                    printQueue.push(printQueue[printQueue.length - 1]);
                 }
 
-                ctx.beginPath();
-                ctx.setLineDash([30, 20]);
-                ctx.moveTo(HALF_W, 50);
-                ctx.lineTo(HALF_W, A4_H - 50);
-                ctx.strokeStyle = '#9ca3af'; 
-                ctx.lineWidth = 4;
-                ctx.stroke();
-                ctx.setLineDash([]);
+                const A4_W = 2970;
+                const A4_H = 2100;
+                canvas.width = A4_W;
+                canvas.height = A4_H;
 
-                const canvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-                if (i > 0) pdf.addPage();
-                pdf.addImage(canvasDataUrl, 'JPEG', 0, 0, 297, 210);
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                const HALF_W = A4_W / 2; 
+                const SLOT_W = HALF_W - (MARGIN * 2 * 10); 
+                const SLOT_H = A4_H - (MARGIN * 2 * 10);   
+                const LEFT_CX = (HALF_W / 2); 
+                const RIGHT_CX = HALF_W + (HALF_W / 2); 
+                const CY = A4_H / 2; 
+
+                for (let i = 0; i < printQueue.length; i += 2) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, A4_W, A4_H);
+
+                    await drawImageIntoSlotWithRotation(ctx, printQueue[i], LEFT_CX, CY, SLOT_W, SLOT_H);
+                    if (i + 1 < printQueue.length) {
+                        await drawImageIntoSlotWithRotation(ctx, printQueue[i + 1], RIGHT_CX, CY, SLOT_W, SLOT_H);
+                    }
+
+                    ctx.beginPath();
+                    ctx.setLineDash([30, 20]);
+                    ctx.moveTo(HALF_W, 50);
+                    ctx.lineTo(HALF_W, A4_H - 50);
+                    ctx.strokeStyle = '#9ca3af'; 
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    const canvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(canvasDataUrl, 'JPEG', 0, 0, 297, 210);
+                }
+                pdf.save(`맞춤인쇄_2쪽뽑기.pdf`);
+
+            } else if (layout === 4) {
+                while (printQueue.length % 4 !== 0) {
+                    printQueue.push(printQueue[printQueue.length - 1]);
+                }
+
+                const A4_W = 2100;
+                const A4_H = 2970;
+                canvas.width = A4_W;
+                canvas.height = A4_H;
+
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const HALF_W = A4_W / 2;
+                const HALF_H = A4_H / 2;
+                const SLOT_W = HALF_W - (MARGIN * 2 * 10);
+                const SLOT_H = HALF_H - (MARGIN * 2 * 10);
+                const CX1 = HALF_W / 2;
+                const CX2 = HALF_W + (HALF_W / 2);
+                const CY1 = HALF_H / 2;
+                const CY2 = HALF_H + (HALF_H / 2);
+
+                for (let i = 0; i < printQueue.length; i += 4) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, A4_W, A4_H);
+
+                    await drawImageIntoSlotWithRotation(ctx, printQueue[i], CX1, CY1, SLOT_W, SLOT_H);
+                    if (i + 1 < printQueue.length) {
+                        await drawImageIntoSlotWithRotation(ctx, printQueue[i + 1], CX2, CY1, SLOT_W, SLOT_H);
+                    }
+                    if (i + 2 < printQueue.length) {
+                        await drawImageIntoSlotWithRotation(ctx, printQueue[i + 2], CX1, CY2, SLOT_W, SLOT_H);
+                    }
+                    if (i + 3 < printQueue.length) {
+                        await drawImageIntoSlotWithRotation(ctx, printQueue[i + 3], CX2, CY2, SLOT_W, SLOT_H);
+                    }
+
+                    ctx.beginPath();
+                    ctx.setLineDash([30, 20]);
+                    ctx.moveTo(HALF_W, 50);
+                    ctx.lineTo(HALF_W, A4_H - 50);
+                    ctx.moveTo(50, HALF_H);
+                    ctx.lineTo(A4_W - 50, HALF_H);
+                    ctx.strokeStyle = '#9ca3af';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    const canvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(canvasDataUrl, 'JPEG', 0, 0, 210, 297);
+                }
+                pdf.save(`맞춤인쇄_4쪽뽑기.pdf`);
             }
 
-            pdf.save(`색칠공부_도안모음.pdf`);
-            
+            loadingOverlay.style.display = 'none';
             generateBtn.innerText = 'PDF로 다운로드';
             generateBtn.disabled = false;
         });
