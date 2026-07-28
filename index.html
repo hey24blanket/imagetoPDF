@@ -165,7 +165,6 @@
             border: 1px solid var(--primary);
         }
 
-        /* 버튼 스타일들 (그림자 없음) */
         .action-btn {
             border: 2px solid var(--border);
             padding: 14px 20px;
@@ -244,7 +243,6 @@
             margin-top: 8px;
         }
 
-        /* 이메일 입력 모달 팝업 스타일 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -313,7 +311,6 @@
             color: var(--accent-green-text);
         }
 
-        /* 전송 완료 토스트 메시지 스타일 (부드러운 페이드 효과) */
         .toast-msg {
             position: fixed;
             bottom: 40px;
@@ -370,10 +367,8 @@
         <div id="loading-text">파일을 처리 중입니다...</div>
     </div>
 
-    <!-- 이메일 전송 완료 토스트 메시지 -->
     <div class="toast-msg" id="toast-msg">이메일로 전송되었습니다</div>
 
-    <!-- 이메일 입력 모달 팝업 -->
     <div class="modal-overlay" id="email-modal">
         <div class="modal-box">
             <h3>이메일로 PDF 받기</h3>
@@ -799,6 +794,7 @@
 
         modalSendBtn.addEventListener('click', async () => {
             const emailVal = emailInput.value.trim();
+            const subjectVal = subjectInput.value.trim();
             if (!emailVal || !emailVal.includes('@')) {
                 alert('올바른 이메일 주소를 입력해주세요.');
                 return;
@@ -806,16 +802,47 @@
 
             emailModal.style.display = 'none';
             loadingOverlay.style.display = 'flex';
-            loadingText.innerText = '이메일 전송 중...';
-            await new Promise(resolve => setTimeout(resolve, 800));
-            loadingOverlay.style.display = 'none';
+            loadingText.innerText = 'PDF 고유 다운로드 링크 생성 중...';
 
-            toastMsg.innerText = `${emailVal}으로 전송되었습니다`;
-            toastMsg.classList.add('show');
+            try {
+                const pdf = await buildPdfDocument();
+                const pdfBlob = pdf.output('blob');
 
-            setTimeout(() => {
-                toastMsg.classList.remove('show');
-            }, 1000);
+                const formData = new FormData();
+                formData.append('file', pdfBlob, '맞춤인쇄_도안모음.pdf');
+
+                const uploadRes = await fetch('https://file.io', {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                
+                let downloadLink = '';
+                if (uploadData.success && uploadData.link) {
+                    downloadLink = uploadData.link;
+                } else {
+                    throw new Error('링크 생성 실패');
+                }
+
+                loadingOverlay.style.display = 'none';
+
+                const bodyText = `PDF 고유 다운로드 링크:\\n${downloadLink}\\n\\n프린터가 있는 컴퓨터에서 위 링크를 입력하여 다운로드하세요.`;
+                const mailtoUrl = `mailto:${encodeURIComponent(emailVal)}?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(bodyText)}`;
+                
+                window.location.href = mailtoUrl;
+
+                toastMsg.innerText = `${emailVal}으로 전송되었습니다`;
+                toastMsg.classList.add('show');
+
+                setTimeout(() => {
+                    toastMsg.classList.remove('show');
+                }, 1000);
+
+            } catch (err) {
+                console.error(err);
+                loadingOverlay.style.display = 'none';
+                alert('링크 생성 또는 이메일 전송 중 오류가 발생했습니다.');
+            }
         });
     </script>
 </body>
