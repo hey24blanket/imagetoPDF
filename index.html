@@ -18,9 +18,6 @@
             --primary: #6366F1;
             --accent-green: #D1FAE5;
             --accent-green-text: #065F46;
-            --accent-pink: #FEE2E2;
-            --accent-pink-text: #991B1B;
-            --shadow: 3px 3px 0px #1F2937;
         }
         * {
             box-sizing: border-box;
@@ -47,7 +44,7 @@
             margin-bottom: 20px;
         }
         
-        /* 업로드 박스 스타일 (참조 이미지 스타일 반영) */
+        /* 업로드 박스 (그림자 제거) */
         #drop-zone {
             border: 2px solid var(--border);
             border-radius: 16px;
@@ -56,7 +53,6 @@
             cursor: pointer;
             transition: all 0.2s ease;
             margin-bottom: 16px;
-            box-shadow: var(--shadow);
         }
         #drop-zone.dragover {
             background-color: #EEF2FF;
@@ -74,7 +70,7 @@
             margin-top: 6px;
         }
         
-        /* 컨트롤 영역 */
+        /* 컨트롤 영역 (그림자 제거) */
         #controls-container {
             display: none; 
             flex-direction: column;
@@ -84,7 +80,6 @@
             padding: 18px;
             border-radius: 16px;
             border: 2px solid var(--border);
-            box-shadow: var(--shadow);
             text-align: left;
         }
         .control-row {
@@ -114,7 +109,6 @@
             outline: none;
             cursor: pointer;
             background-color: #fff;
-            box-shadow: 2px 2px 0px var(--border);
         }
 
         .slider-container {
@@ -136,7 +130,7 @@
             font-weight: 600;
         }
 
-        /* 여백 실시간 미니 A4 프리뷰 박스 */
+        /* 여백 실시간 미니 A4 프리뷰 박스 (항상 1장 세로 기준 고정) */
         .preview-box-container {
             display: flex;
             justify-content: center;
@@ -151,12 +145,7 @@
             border: 2px solid var(--border);
             border-radius: 6px;
             position: relative;
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
-        }
-        .mini-page.landscape {
-            width: 155px;
-            height: 110px;
         }
         .mini-margin-box {
             position: absolute;
@@ -166,16 +155,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        .mini-grid-line-v {
-            position: absolute;
-            top: 0; bottom: 0; left: 50%;
-            border-left: 1px dashed #9CA3AF;
-        }
-        .mini-grid-line-h {
-            position: absolute;
-            left: 0; right: 0; top: 50%;
-            border-top: 1px dashed #9CA3AF;
         }
         .mini-slot-label {
             font-size: 9px;
@@ -187,7 +166,7 @@
             border: 1px solid var(--primary);
         }
 
-        /* 메인 다운로드 버튼 (초록색 포인트 스타일) */
+        /* 메인 다운로드 버튼 (그림자 제거) */
         #generate-btn {
             background-color: var(--accent-green);
             color: var(--accent-green-text);
@@ -198,19 +177,13 @@
             border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            box-shadow: var(--shadow);
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: background-color 0.2s;
             margin-top: 10px;
-        }
-        #generate-btn:active {
-            transform: translate(2px, 2px);
-            box-shadow: 1px 1px 0px var(--border);
         }
         #generate-btn:disabled {
             background-color: #E5E7EB;
             color: #9CA3AF;
             cursor: not-allowed;
-            box-shadow: none;
             display: none;
         }
         
@@ -225,12 +198,12 @@
                 grid-template-columns: repeat(3, 1fr);
             }
         }
+        /* 카드 컴포넌트 (그림자 제거) */
         .preview-item-wrapper {
             position: relative;
             background: var(--card-bg);
             border: 2px solid var(--border);
             border-radius: 12px;
-            box-shadow: var(--shadow);
             padding: 10px;
             display: flex;
             flex-direction: column;
@@ -265,12 +238,6 @@
             cursor: pointer;
             width: 100%;
             margin-top: 8px;
-            box-shadow: 1px 1px 0px var(--border);
-            transition: background-color 0.1s;
-        }
-        .rotate-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: none;
         }
 
         .loading-overlay {
@@ -344,18 +311,17 @@
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                 <label for="margin-slider">여백 크기 조절</label>
                 <div class="slider-container">
-                    <input type="range" id="margin-slider" min="0" max="150" value="30">
+                    <input type="range" id="margin-slider" min="0" max="50" value="15">
                     <div class="range-labels">
                         <span>없음</span>
                         <span>넓게</span>
                     </div>
                 </div>
             </div>
+            <!-- 여백 미리보기 (항상 1장 세로 기준 단독 표시) -->
             <div class="preview-box-container">
-                <div id="mini-page" class="mini-page landscape">
+                <div id="mini-page" class="mini-page">
                     <div id="mini-margin-box" class="mini-margin-box">
-                        <div id="mini-grid-v" class="mini-grid-line-v"></div>
-                        <div id="mini-grid-h" class="mini-grid-line-h" style="display:none;"></div>
                         <span class="mini-slot-label">여백 예시</span>
                     </div>
                 </div>
@@ -377,10 +343,7 @@
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
         
-        const miniPage = document.getElementById('mini-page');
         const miniMarginBox = document.getElementById('mini-margin-box');
-        const miniGridV = document.getElementById('mini-grid-v');
-        const miniGridH = document.getElementById('mini-grid-h');
 
         let uploadedItems = [];
 
@@ -397,32 +360,15 @@
         dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        layoutSelect.addEventListener('change', updateMiniPreview);
         marginSlider.addEventListener('input', updateMiniPreview);
 
         function updateMiniPreview() {
-            const layout = parseInt(layoutSelect.value, 10);
             const val = parseInt(marginSlider.value, 10);
-            
-            const insetPx = (val / 150) * 18; 
+            const insetPx = (val / 50) * 25; 
             miniMarginBox.style.top = insetPx + 'px';
             miniMarginBox.style.bottom = insetPx + 'px';
             miniMarginBox.style.left = insetPx + 'px';
             miniMarginBox.style.right = insetPx + 'px';
-
-            if (layout === 1) {
-                miniPage.className = 'mini-page portrait';
-                miniGridV.style.display = 'none';
-                miniGridH.style.display = 'none';
-            } else if (layout === 2) {
-                miniPage.className = 'mini-page landscape';
-                miniGridV.style.display = 'block';
-                miniGridH.style.display = 'none';
-            } else if (layout === 4) {
-                miniPage.className = 'mini-page portrait';
-                miniGridV.style.display = 'block';
-                miniGridH.style.display = 'block';
-            }
         }
 
         updateMiniPreview();
@@ -554,7 +500,7 @@
 
             const copies = parseInt(copiesSelect.value, 10);
             const layout = parseInt(layoutSelect.value, 10);
-            const MARGIN = parseInt(marginSlider.value, 10);
+            const sliderVal = parseInt(marginSlider.value, 10);
 
             let printQueue = [];
             for (let i = 0; i < uploadedItems.length; i++) {
@@ -574,8 +520,9 @@
                 canvas.height = A4_H;
 
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const SLOT_W = A4_W - (MARGIN * 2 * 10);
-                const SLOT_H = A4_H - (MARGIN * 2 * 10);
+                const marginPx = sliderVal * 15; 
+                const SLOT_W = A4_W - (marginPx * 2);
+                const SLOT_H = A4_H - (marginPx * 2);
                 const CX = A4_W / 2;
                 const CY = A4_H / 2;
 
@@ -603,8 +550,9 @@
 
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 const HALF_W = A4_W / 2; 
-                const SLOT_W = HALF_W - (MARGIN * 2 * 10); 
-                const SLOT_H = A4_H - (MARGIN * 2 * 10);   
+                const marginPx = sliderVal * 15;
+                const SLOT_W = HALF_W - (marginPx * 2); 
+                const SLOT_H = A4_H - (marginPx * 2);   
                 const LEFT_CX = (HALF_W / 2); 
                 const RIGHT_CX = HALF_W + (HALF_W / 2); 
                 const CY = A4_H / 2; 
@@ -646,8 +594,9 @@
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const HALF_W = A4_W / 2;
                 const HALF_H = A4_H / 2;
-                const SLOT_W = HALF_W - (MARGIN * 2 * 10);
-                const SLOT_H = HALF_H - (MARGIN * 2 * 10);
+                const marginPx = sliderVal * 15;
+                const SLOT_W = HALF_W - (marginPx * 2);
+                const SLOT_H = HALF_H - (marginPx * 2);
                 const CX1 = HALF_W / 2;
                 const CX2 = HALF_W + (HALF_W / 2);
                 const CY1 = HALF_H / 2;
