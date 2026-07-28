@@ -230,17 +230,25 @@
             object-fit: contain;
             transition: transform 0.2s ease;
         }
+        
+        /* 부담스럽지 않은 심플하고 작은 회전 아이콘 버튼 스타일 */
         .rotate-btn {
-            background-color: #F3F4F6;
-            color: var(--text);
-            border: 2px solid var(--border);
-            padding: 6px;
-            font-size: 11px;
+            background: transparent;
+            color: #4B5563;
+            border: none;
+            padding: 4px;
+            font-size: 12px;
             font-weight: 700;
-            border-radius: 8px;
             cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: color 0.2s;
+        }
+        .rotate-btn:hover {
+            color: var(--primary);
         }
 
         .toast-msg {
@@ -480,7 +488,7 @@
 
             const rotateBtn = document.createElement('button');
             rotateBtn.className = 'rotate-btn';
-            rotateBtn.innerText = '↺ 90° 회전';
+            rotateBtn.innerHTML = '🔄 90';
             rotateBtn.onclick = () => {
                 itemObj.rotation = (itemObj.rotation + 90) % 360;
                 img.style.transform = `rotate(${itemObj.rotation}deg)`;
@@ -692,7 +700,6 @@
             }
         });
 
-        // 모바일 네이티브 공유 및 이메일 첨부 기능 (CORS 오류 원천 차단)
         emailOpenBtn.addEventListener('click', async () => {
             loadingOverlay.style.display = 'flex';
             loadingText.innerText = 'PDF 파일 준비 중...';
@@ -705,7 +712,6 @@
 
                 loadingOverlay.style.display = 'none';
 
-                // 모바일 브라우저의 네이티브 공유 시트 호출 (Gmail, 카카오톡, 메일 앱 등으로 파일 바로 전송 가능)
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         files: [file],
@@ -713,7 +719,6 @@
                         text: '프린터로 인쇄할 PDF 파일입니다.'
                     });
                 } else {
-                    // 공유 API를 지원하지 않는 PC 환경 등의 경우 다운로드 폴백
                     const blobUrl = URL.createObjectURL(pdfBlob);
                     const link = document.createElement('a');
                     link.href = blobUrl;
@@ -722,7 +727,7 @@
                     link.click();
                     document.body.removeChild(link);
                     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                    alert('이 브라우저는 직접 파일 공유를 지원하지 않아 PDF가 다운로드되었습니다. 이 파일을 메일에 첨부해 보내세요.');
+                    alert('이 브라우저는 직접 파일 공유를 지원하지 않아 PDF가 다운로드되었습니다.');
                 }
 
                 toastMsg.innerText = '이메일(공유) 전송 완료';
