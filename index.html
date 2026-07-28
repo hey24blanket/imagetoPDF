@@ -243,74 +243,6 @@
             margin-top: 8px;
         }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal-box {
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            width: 100%;
-            max-width: 400px;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .modal-box h3 {
-            margin: 0 0 4px 0;
-            font-size: 18px;
-            font-weight: 800;
-        }
-        .modal-field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .modal-field label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text);
-        }
-        .modal-field input {
-            padding: 10px 12px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-            background: #fff;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 6px;
-        }
-        .modal-btn {
-            flex: 1;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 800;
-            border-radius: 8px;
-            border: 2px solid var(--border);
-            cursor: pointer;
-        }
-        #modal-cancel-btn {
-            background-color: #F3F4F6;
-            color: var(--text);
-        }
-        #modal-send-btn {
-            background-color: var(--accent-green);
-            color: var(--accent-green-text);
-        }
-
         .toast-msg {
             position: fixed;
             bottom: 40px;
@@ -368,24 +300,6 @@
     </div>
 
     <div class="toast-msg" id="toast-msg">이메일로 전송되었습니다</div>
-
-    <div class="modal-overlay" id="email-modal">
-        <div class="modal-box">
-            <h3>이메일로 PDF 받기</h3>
-            <div class="modal-field">
-                <label for="email-input">받을 이메일 주소</label>
-                <input type="email" id="email-input" placeholder="example@email.com">
-            </div>
-            <div class="modal-field">
-                <label for="subject-input">제목</label>
-                <input type="text" id="subject-input" value="맞춤 인쇄 PDF 도안 모음">
-            </div>
-            <div class="modal-buttons">
-                <button class="modal-btn" id="modal-cancel-btn">취소</button>
-                <button class="modal-btn" id="modal-send-btn">전송</button>
-            </div>
-        </div>
-    </div>
 
     <h1>이미지 & PDF 맞춤 인쇄기 🎨</h1>
     <p class="desc">가로/세로 어떤 파일이든 A4 용지에 딱 맞춰 변환합니다.</p>
@@ -458,12 +372,6 @@
         const loadingText = document.getElementById('loading-text');
         
         const miniMarginBox = document.getElementById('mini-margin-box');
-
-        const emailModal = document.getElementById('email-modal');
-        const modalCancelBtn = document.getElementById('modal-cancel-btn');
-        const modalSendBtn = document.getElementById('modal-send-btn');
-        const emailInput = document.getElementById('email-input');
-        const subjectInput = document.getElementById('subject-input');
         const toastMsg = document.getElementById('toast-msg');
 
         let uploadedItems = [];
@@ -784,56 +692,41 @@
             }
         });
 
-        emailOpenBtn.addEventListener('click', () => {
-            emailModal.style.display = 'flex';
-        });
-
-        modalCancelBtn.addEventListener('click', () => {
-            emailModal.style.display = 'none';
-        });
-
-        modalSendBtn.addEventListener('click', async () => {
-            const emailVal = emailInput.value.trim();
-            const subjectVal = subjectInput.value.trim();
-            if (!emailVal || !emailVal.includes('@')) {
-                alert('올바른 이메일 주소를 입력해주세요.');
-                return;
-            }
-
-            emailModal.style.display = 'none';
+        // 모바일 네이티브 공유 및 이메일 첨부 기능 (CORS 오류 원천 차단)
+        emailOpenBtn.addEventListener('click', async () => {
             loadingOverlay.style.display = 'flex';
-            loadingText.innerText = 'PDF 고유 다운로드 링크 생성 중...';
+            loadingText.innerText = 'PDF 파일 준비 중...';
+            await new Promise(resolve => setTimeout(resolve, 50));
 
             try {
                 const pdf = await buildPdfDocument();
                 const pdfBlob = pdf.output('blob');
-
-                const formData = new FormData();
-                formData.append('file', pdfBlob, '맞춤인쇄_도안모음.pdf');
-
-                const uploadRes = await fetch('https://file.io', {
-                    method: 'POST',
-                    body: formData
-                });
-                const uploadData = await uploadRes.json();
-                
-                let downloadLink = '';
-                if (uploadData.success && uploadData.link) {
-                    downloadLink = uploadData.link;
-                } else {
-                    throw new Error('링크 생성 실패');
-                }
+                const file = new File([pdfBlob], '맞춤인쇄_도안모음.pdf', { type: 'application/pdf' });
 
                 loadingOverlay.style.display = 'none';
 
-                const bodyText = `PDF 고유 다운로드 링크:\\n${downloadLink}\\n\\n프린터가 있는 컴퓨터에서 위 링크를 입력하여 다운로드하세요.`;
-                const mailtoUrl = `mailto:${encodeURIComponent(emailVal)}?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(bodyText)}`;
-                
-                window.location.href = mailtoUrl;
+                // 모바일 브라우저의 네이티브 공유 시트 호출 (Gmail, 카카오톡, 메일 앱 등으로 파일 바로 전송 가능)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: '맞춤 인쇄 PDF 도안 모음',
+                        text: '프린터로 인쇄할 PDF 파일입니다.'
+                    });
+                } else {
+                    // 공유 API를 지원하지 않는 PC 환경 등의 경우 다운로드 폴백
+                    const blobUrl = URL.createObjectURL(pdfBlob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = '맞춤인쇄_도안모음.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                    alert('이 브라우저는 직접 파일 공유를 지원하지 않아 PDF가 다운로드되었습니다. 이 파일을 메일에 첨부해 보내세요.');
+                }
 
-                toastMsg.innerText = `${emailVal}으로 전송되었습니다`;
+                toastMsg.innerText = '이메일(공유) 전송 완료';
                 toastMsg.classList.add('show');
-
                 setTimeout(() => {
                     toastMsg.classList.remove('show');
                 }, 1000);
@@ -841,7 +734,9 @@
             } catch (err) {
                 console.error(err);
                 loadingOverlay.style.display = 'none';
-                alert('링크 생성 또는 이메일 전송 중 오류가 발생했습니다.');
+                if (err.name !== 'AbortError') {
+                    alert('파일 공유 중 오류가 발생했습니다.');
+                }
             }
         });
     </script>
