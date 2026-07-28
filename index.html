@@ -44,7 +44,6 @@
             margin-bottom: 20px;
         }
         
-        /* 업로드 박스 (그림자 제거) */
         #drop-zone {
             border: 2px solid var(--border);
             border-radius: 16px;
@@ -70,7 +69,6 @@
             margin-top: 6px;
         }
         
-        /* 컨트롤 영역 (그림자 제거) */
         #controls-container {
             display: none; 
             flex-direction: column;
@@ -130,7 +128,6 @@
             font-weight: 600;
         }
 
-        /* 여백 실시간 미니 A4 프리뷰 박스 (항상 1장 세로 기준 고정) */
         .preview-box-container {
             display: flex;
             justify-content: center;
@@ -166,7 +163,6 @@
             border: 1px solid var(--primary);
         }
 
-        /* 메인 다운로드 버튼 (그림자 제거) */
         #generate-btn {
             background-color: var(--accent-green);
             color: var(--accent-green-text);
@@ -198,7 +194,6 @@
                 grid-template-columns: repeat(3, 1fr);
             }
         }
-        /* 카드 컴포넌트 (그림자 제거) */
         .preview-item-wrapper {
             position: relative;
             background: var(--card-bg);
@@ -309,12 +304,13 @@
         
         <div class="control-row" style="align-items: flex-start; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                <label for="margin-slider">여백 크기 조절</label>
+                <label for="margin-slider">여백 조절: <span id="margin-val" style="color:var(--primary); font-weight:800;">1.5</span> px</label>
                 <div class="slider-container">
-                    <input type="range" id="margin-slider" min="0" max="50" value="15">
+                    <!-- 0부터 15까지, 0.5 단위 설정 -->
+                    <input type="range" id="margin-slider" min="0" max="15" step="0.5" value="1.5">
                     <div class="range-labels">
-                        <span>없음</span>
-                        <span>넓게</span>
+                        <span>0px</span>
+                        <span>15px</span>
                     </div>
                 </div>
             </div>
@@ -340,6 +336,7 @@
         const copiesSelect = document.getElementById('copies-select');
         const layoutSelect = document.getElementById('layout-select');
         const marginSlider = document.getElementById('margin-slider');
+        const marginValText = document.getElementById('margin-val');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
         
@@ -363,8 +360,10 @@
         marginSlider.addEventListener('input', updateMiniPreview);
 
         function updateMiniPreview() {
-            const val = parseInt(marginSlider.value, 10);
-            const insetPx = (val / 50) * 25; 
+            const val = parseFloat(marginSlider.value);
+            marginValText.innerText = val;
+            
+            const insetPx = (val / 15) * 20; 
             miniMarginBox.style.top = insetPx + 'px';
             miniMarginBox.style.bottom = insetPx + 'px';
             miniMarginBox.style.left = insetPx + 'px';
@@ -475,14 +474,11 @@
 
             let scale;
             const rot = itemObj.rotation % 180;
+            
             if (rot !== 0) {
                 scale = Math.min(slotH / img.width, slotW / img.height);
             } else {
-                if (img.width > img.height) {
-                    scale = Math.min(slotH / img.width, slotW / img.height);
-                } else {
-                    scale = Math.min(slotW / img.width, slotH / img.height);
-                }
+                scale = Math.min(slotW / img.width, slotH / img.height);
             }
 
             const drawW = img.width * scale;
@@ -500,7 +496,7 @@
 
             const copies = parseInt(copiesSelect.value, 10);
             const layout = parseInt(layoutSelect.value, 10);
-            const sliderVal = parseInt(marginSlider.value, 10);
+            const sliderVal = parseFloat(marginSlider.value); // 0 ~ 15
 
             let printQueue = [];
             for (let i = 0; i < uploadedItems.length; i++) {
@@ -520,7 +516,7 @@
                 canvas.height = A4_H;
 
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const marginPx = sliderVal * 15; 
+                const marginPx = sliderVal * 10; 
                 const SLOT_W = A4_W - (marginPx * 2);
                 const SLOT_H = A4_H - (marginPx * 2);
                 const CX = A4_W / 2;
@@ -550,7 +546,7 @@
 
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 const HALF_W = A4_W / 2; 
-                const marginPx = sliderVal * 15;
+                const marginPx = sliderVal * 10;
                 const SLOT_W = HALF_W - (marginPx * 2); 
                 const SLOT_H = A4_H - (marginPx * 2);   
                 const LEFT_CX = (HALF_W / 2); 
@@ -594,7 +590,7 @@
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const HALF_W = A4_W / 2;
                 const HALF_H = A4_H / 2;
-                const marginPx = sliderVal * 15;
+                const marginPx = sliderVal * 10;
                 const SLOT_W = HALF_W - (marginPx * 2);
                 const SLOT_H = HALF_H - (marginPx * 2);
                 const CX1 = HALF_W / 2;
