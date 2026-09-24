@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import {messages} from './src/i18n.js';import {body} from './src/template.js';
-const origin=process.env.SITE_URL||'https://imageto-pdf.vercel.app';
+const origin=process.env.SITE_URL||'https://imageto-pdf-eta.vercel.app';
 await fs.rm('dist',{recursive:true,force:true});await fs.mkdir('dist/vendor',{recursive:true});await fs.cp('src','dist/src',{recursive:true});
 for(const [from,to]of [['node_modules/pdf-lib/dist/pdf-lib.min.js','pdf-lib.min.js'],['node_modules/pdfjs-dist/build/pdf.mjs','pdf.mjs'],['node_modules/pdfjs-dist/build/pdf.worker.mjs','pdf.worker.mjs'],['node_modules/pdfjs-dist/cmaps','cmaps'],['node_modules/pdfjs-dist/standard_fonts','standard_fonts']])await fs.cp(from,'dist/vendor/'+to,{recursive:true});
 await fs.cp('public','dist',{recursive:true});
