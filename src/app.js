@@ -29,7 +29,7 @@ async function readImage(file){
 }
 async function readPDF(file){
  const bytes=new Uint8Array(await file.arrayBuffer()),lib=await window.PDFLib.PDFDocument.load(bytes),engine=await pdfjs();
- const task=engine.getDocument({data:bytes.slice(),isEvalSupported:false,cMapUrl:'/vendor/cmaps/',cMapPacked:true,standardFontDataUrl:'/vendor/standard_fonts/'});task.onPassword=()=>task.destroy();
+ const task=engine.getDocument({data:bytes.slice(),isEvalSupported:false,cMapUrl:'/vendor/cmaps/',cMapPacked:true,standardFontDataUrl:'/vendor/standard_fonts/'});task.onPassword=()=>{void task.destroy();};
  const pdf=await task.promise;if(items.length+pdf.numPages>80){await pdf.destroy();throw new Error('limit');}
  const source={lib,pdf},pending=[];
  try{for(let i=0;i<pdf.numPages;i++){
