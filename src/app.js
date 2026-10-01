@@ -72,7 +72,7 @@ $('prev').onclick=()=>{currentPage--;update();};$('next').onclick=()=>{currentPa
 const filename=()=>($('filename').value.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/\.pdf$/i,'')||'coloring-pages')+'.pdf';
 async function prepare(){if(cached)return cached;setBusy(true,t.generating);try{cached=await createPDF(items,settings(),(d,total)=>setBusy(true,`${t.generating} · ${d}/${total}`,d,total));$('share').querySelector('span').textContent=t.share;return cached;}finally{setBusy(false);}}
 function download(blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename();document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);notify(t.downloaded);track('download');}
-function track(action){window.va?.('event',{name:'core_action',data:{action,layout:count}});}
+function track(action){window.blanketAnalytics?.track('core_action',{action,layout:count});}
 $('save').onclick=async()=>{if(busy||!items.length)return;try{download(await prepare());}catch(e){notify(t[e.message]||t.error);}};
 $('share').onclick=async()=>{if(busy||!items.length)return;try{
  if(!cached){await prepare();$('share').querySelector('span').textContent=t.share;$('export-status').textContent=t.ready;return;}

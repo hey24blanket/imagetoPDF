@@ -43,7 +43,7 @@ ${alternates}
 <meta name="twitter:description" content="${description}">
 <link rel="stylesheet" href="/src/style.css">
 <script type="application/ld+json">${JSON.stringify(schema)}</script>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)}</script>
+<script src="/src/blanket-analytics.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>`;
 }
 
